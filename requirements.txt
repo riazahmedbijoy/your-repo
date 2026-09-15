@@ -1,6 +1,5 @@
 python-telegram-bot
 yt-dlp
 ffmpeg-python
-turso
+pyturso
 aiohttp
-uvicorn
