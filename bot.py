@@ -21,7 +21,7 @@ TOKEN = os.environ.get('BOT_TOKEN')
 TURSO_URL = os.environ.get('TURSO_DB_URL')
 TURSO_TOKEN = os.environ.get('TURSO_DB_AUTH_TOKEN')
 POT_PROVIDER_URL = os.environ.get('POT_PROVIDER_URL')
-CLIP_DURATION = 60
+CLIP_DURATION = 60  # ক্লিপের দৈর্ঘ্য সেকেন্ডে
 
 # ---------- ডেটাবেস ইনিশিয়ালাইজেশন ----------
 def init_db():
@@ -50,18 +50,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'আমি সেটিকে ছোট ছোট ক্লিপে কেটে আপনাকে ফেরত দেব।'
     )
 
-# ---------- YouTube ভিডিও ডাউনলোড (আপডেটেড ফরম্যাট সিলেক্টর) ----------
+# ---------- YouTube ভিডিও ডাউনলোড (নমনীয় ফরম্যাট সিলেক্টর) ----------
 async def download_video(url: str) -> str:
     """yt-dlp ব্যবহার করে YouTube থেকে ভিডিও ডাউনলোড করে"""
     os.makedirs('downloads', exist_ok=True)
     
     ydl_opts = {
-        # 💡 মূল পরিবর্তন: নমনীয় ফরম্যাট সিলেক্টর এবং ফলব্যাক
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        # 💡 মূল পরিবর্তন: নমনীয় ফরম্যাট সিলেক্টর
+        'format': 'bestvideo+bestaudio/best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'quiet': True,
         'no_warnings': True,
-        'cookiefile': 'cookies.txt',  # GitHub-এ আপলোড করা cookies.txt
+        'cookiefile': 'cookies.txt',
         'merge_output_format': 'mp4',  # ভিডিও ও অডিও মার্জ করে mp4 ফাইল তৈরি করবে
         'extractor_args': {
             'youtube': {
