@@ -1,1 +1,13 @@
-
+services:
+  - type: web
+    name: youtube-clip-bot
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: TURSO_DB_URL
+        sync: false
+      - key: TURSO_DB_AUTH_TOKEN
+        sync: false
