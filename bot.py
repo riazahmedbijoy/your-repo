@@ -53,9 +53,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'আমি সেটিকে ছোট ছোট ক্লিপে কেটে আপনাকে ফেরত দেব।'
     )
 
-# ---------- YouTube ভিডিও ডাউনলোড (মোবাইল ক্লায়েন্ট) ----------
+# ---------- YouTube ভিডিও ডাউনলোড (কুকিজ সহ) ----------
 async def download_video(url: str) -> str:
-    """yt-dlp ব্যবহার করে YouTube থেকে ভিডিও ডাউনলোড করে (মোবাইল ক্লায়েন্ট সিমুলেশন)"""
+    """yt-dlp ব্যবহার করে YouTube থেকে ভিডিও ডাউনলোড করে (cookies.txt সহ)"""
     os.makedirs('downloads', exist_ok=True)
     
     ydl_opts = {
@@ -63,12 +63,8 @@ async def download_video(url: str) -> str:
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'quiet': True,
         'no_warnings': True,
-        # এই অংশটি yt-dlp-কে মোবাইল অ্যাপ হিসেবে পরিচয় দেয়
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android', 'ios']
-            }
-        }
+        # GitHub-এ আপলোড করা cookies.txt ফাইলটি ব্যবহার করবে
+        'cookiefile': 'cookies.txt'
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
