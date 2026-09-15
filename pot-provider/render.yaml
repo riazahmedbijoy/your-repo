@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: pot-provider
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 4416
