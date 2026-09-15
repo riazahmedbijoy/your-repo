@@ -22,7 +22,6 @@ TURSO_URL = os.environ.get('TURSO_DB_URL')
 TURSO_TOKEN = os.environ.get('TURSO_DB_AUTH_TOKEN')
 CLIP_DURATION = 60  # ক্লিপের দৈর্ঘ্য সেকেন্ডে (৬০ সেকেন্ড)
 
-
 # ---------- ডেটাবেস ইনিশিয়ালাইজেশন ----------
 def init_db():
     """Turso ক্লাউড ডেটাবেসে কানেক্ট করে টেবিল তৈরি করে"""
@@ -47,7 +46,6 @@ def init_db():
         logger.error(f"❌ ডেটাবেস কানেকশন এরর: {e}")
         return None
 
-
 # ---------- /start কমান্ড ----------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -55,22 +53,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'আমি সেটিকে ছোট ছোট ক্লিপে কেটে আপনাকে ফেরত দেব।'
     )
 
-
-# ---------- YouTube ভিডিও ডাউনলোড ----------
+# ---------- YouTube ভিডিও ডাউনলোড (মোবাইল ক্লায়েন্ট) ----------
 async def download_video(url: str) -> str:
-    """yt-dlp ব্যবহার করে YouTube থেকে ভিডিও ডাউনলোড করে"""
+    """yt-dlp ব্যবহার করে YouTube থেকে ভিডিও ডাউনলোড করে (মোবাইল ক্লায়েন্ট সিমুলেশন)"""
     os.makedirs('downloads', exist_ok=True)
+    
     ydl_opts = {
         'format': 'best[ext=mp4]/best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'quiet': True,
         'no_warnings': True,
+        # এই অংশটি yt-dlp-কে মোবাইল অ্যাপ হিসেবে পরিচয় দেয়
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios']
+            }
+        }
     }
+    
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         filename = ydl.prepare_filename(info)
     return filename
-
 
 # ---------- ভিডিও ক্লিপিং ----------
 async def split_video(input_path: str, clip_duration: int) -> list:
@@ -99,7 +103,6 @@ async def split_video(input_path: str, clip_duration: int) -> list:
     except Exception as e:
         logger.error(f"ভিডিও স্প্লিট এরর: {e}")
     return clips
-
 
 # ---------- মেসেজ হ্যান্ডলার ----------
 async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -168,7 +171,6 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception:
                 pass
 
-
 # ---------- বট চালানোর ফাংশন (আলাদা থ্রেডে চলবে) ----------
 async def run_bot():
     """টেলিগ্রাম বট চালু করে"""
@@ -186,16 +188,13 @@ async def run_bot():
     # বট চলতে থাকবে যতক্ষণ না প্রোগ্রাম বন্ধ হয়
     await asyncio.Event().wait()
 
-
 def start_bot_thread():
     """আলাদা থ্রেডে বট চালু করে"""
     asyncio.run(run_bot())
 
-
 # ---------- ওয়েব সার্ভার (মূল থ্রেডে চলবে) ----------
 async def health_check(request):
     return web.Response(text="Bot is alive!")
-
 
 def main():
     # টেলিগ্রাম বটকে আলাদা থ্রেডে চালান
@@ -208,7 +207,6 @@ def main():
     port = int(os.environ.get('PORT', 8080))
     logger.info(f"🌐 ওয়েব সার্ভার পোর্ট {port} এ চালু হচ্ছে...")
     web.run_app(app, host='0.0.0.0', port=port)
-
 
 if __name__ == '__main__':
     main()
