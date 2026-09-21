@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 TOKEN = os.environ.get('BOT_TOKEN')
 TURSO_URL = os.environ.get('TURSO_DB_URL')
 TURSO_TOKEN = os.environ.get('TURSO_DB_AUTH_TOKEN')
-POT_PROVIDER_URL = os.environ.get('POT_PROVIDER_URL')
+POT_PROVIDER_URL = os.environ.get('POT_PROVIDER_URL')  # PO Token Provider URL
 CLIP_DURATION = 60  # ক্লিপের দৈর্ঘ্য সেকেন্ডে
 
 # ---------- ডেটাবেস ইনিশিয়ালাইজেশন ----------
@@ -50,22 +50,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'আমি সেটিকে ছোট ছোট ক্লিপে কেটে আপনাকে ফেরত দেব।'
     )
 
-# ---------- YouTube ভিডিও ডাউনলোড (নমনীয় ফরম্যাট সিলেক্টর) ----------
+# ---------- YouTube ভিডিও ডাউনলোড (PO Token + mweb/tv ক্লায়েন্ট) ----------
 async def download_video(url: str) -> str:
     """yt-dlp ব্যবহার করে YouTube থেকে ভিডিও ডাউনলোড করে"""
     os.makedirs('downloads', exist_ok=True)
     
     ydl_opts = {
-        # 💡 মূল পরিবর্তন: নমনীয় ফরম্যাট সিলেক্টর
         'format': 'bestvideo+bestaudio/best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'quiet': True,
         'no_warnings': True,
-        'cookiefile': 'cookies.txt',
-        'merge_output_format': 'mp4',  # ভিডিও ও অডিও মার্জ করে mp4 ফাইল তৈরি করবে
+        'cookiefile': 'cookies.txt',  # GitHub-এ আপলোড করা cookies.txt
+        'merge_output_format': 'mp4',
+        # 💡 ডেটাসেন্টার IP-তে mweb এবং tv ক্লায়েন্ট সবচেয়ে ভালো কাজ করে
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'ios', 'web'],
+                'player_client': ['mweb', 'tv'],
                 'pot_provider': [POT_PROVIDER_URL] if POT_PROVIDER_URL else []
             }
         }
