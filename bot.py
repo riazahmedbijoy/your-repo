@@ -7,7 +7,6 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import yt_dlp
 import ffmpeg
-import turso_serverless
 
 # ---------- লগিং সেটআপ ----------
 logging.basicConfig(
@@ -18,30 +17,7 @@ logger = logging.getLogger(__name__)
 
 # ---------- এনভায়রনমেন্ট ভেরিয়েবল ----------
 TOKEN = os.environ.get('BOT_TOKEN')
-TURSO_URL = os.environ.get('TURSO_DB_URL')
-TURSO_TOKEN = os.environ.get('TURSO_DB_AUTH_TOKEN')
-POT_PROVIDER_URL = os.environ.get('POT_PROVIDER_URL')  # PO Token Provider URL
 CLIP_DURATION = 60  # ক্লিপের দৈর্ঘ্য সেকেন্ডে
-
-# ---------- ডেটাবেস ইনিশিয়ালাইজেশন ----------
-def init_db():
-    try:
-        conn = turso_serverless.connect(TURSO_URL, auth_token=TURSO_TOKEN)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS clips (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                video_title TEXT,
-                clip_number INTEGER,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        conn.commit()
-        logger.info("✅ ডেটাবেস সফলভাবে কানেক্ট হয়েছে।")
-        return conn
-    except Exception as e:
-        logger.error(f"❌ ডেটাবেস কানেকশন এরর: {e}")
-        return None
 
 # ---------- /start কমান্ড ----------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -50,23 +26,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'আমি সেটিকে ছোট ছোট ক্লিপে কেটে আপনাকে ফেরত দেব।'
     )
 
-# ---------- YouTube ভিডিও ডাউনলোড (PO Token + mweb/tv ক্লায়েন্ট) ----------
+# ---------- YouTube ভিডিও ডাউনলোড (iOS ক্লায়েন্ট + কুকিজ) ----------
 async def download_video(url: str) -> str:
     """yt-dlp ব্যবহার করে YouTube থেকে ভিডিও ডাউনলোড করে"""
     os.makedirs('downloads', exist_ok=True)
     
     ydl_opts = {
-        'format': 'bestvideo+bestaudio/best',
+        'format': 'best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'quiet': True,
         'no_warnings': True,
         'cookiefile': 'cookies.txt',  # GitHub-এ আপলোড করা cookies.txt
-        'merge_output_format': 'mp4',
-        # 💡 ডেটাসেন্টার IP-তে mweb এবং tv ক্লায়েন্ট সবচেয়ে ভালো কাজ করে
+        # 💡 iOS ক্লায়েন্ট ব্যবহার করলে বট চেক অনেক কম আসে
         'extractor_args': {
             'youtube': {
-                'player_client': ['mweb', 'tv'],
-                'pot_provider': [POT_PROVIDER_URL] if POT_PROVIDER_URL else []
+                'player_client': ['ios', 'android']
             }
         }
     }
@@ -117,25 +91,11 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text('❌ দুঃখিত, ক্লিপ তৈরি করা সম্ভব হয়নি।')
             return
 
-        conn = context.bot_data.get('db_conn')
-        if not conn:
-            conn = init_db()
-            context.bot_data['db_conn'] = conn
-
         total = len(clips)
         for idx, clip_path in enumerate(clips, 1):
             try:
                 with open(clip_path, 'rb') as video:
                     await update.message.reply_video(video=video, caption=f'ক্লিপ {idx}/{total}')
-                if conn:
-                    try:
-                        conn.execute(
-                            "INSERT INTO clips (user_id, video_title, clip_number) VALUES (?, ?, ?)",
-                            (update.effective_user.id, os.path.basename(video_path), idx)
-                        )
-                        conn.commit()
-                    except Exception as db_err:
-                        logger.error(f"DB insert error: {db_err}")
                 os.remove(clip_path)
             except Exception as send_err:
                 logger.error(f"ক্লিপ পাঠাতে সমস্যা: {send_err}")
@@ -153,9 +113,7 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ---------- বট চালানোর ফাংশন ----------
 async def run_bot():
-    db_conn = init_db()
     app = Application.builder().token(TOKEN).build()
-    app.bot_data['db_conn'] = db_conn
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_url))
     logger.info("🤖 বট চালু হচ্ছে...")
@@ -167,7 +125,7 @@ async def run_bot():
 def start_bot_thread():
     asyncio.run(run_bot())
 
-# ---------- ওয়েব সার্ভার ----------
+# ---------- ওয়েব সার্ভার (Render সচল রাখার জন্য) ----------
 async def health_check(request):
     return web.Response(text="Bot is alive!")
 
