@@ -3,3 +3,4 @@ yt-dlp
 ffmpeg-python
 turso_serverless
 aiohttp
+bgutil-ytdlp-pot-provider
