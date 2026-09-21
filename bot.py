@@ -26,7 +26,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'আমি সেটিকে ছোট ছোট ক্লিপে কেটে আপনাকে ফেরত দেব।'
     )
 
-# ---------- YouTube ভিডিও ডাউনলোড (iOS ক্লায়েন্ট + কুকিজ) ----------
+# ---------- YouTube ভিডিও ডাউনলোড (tv + mweb ক্লায়েন্ট + কুকিজ) ----------
 async def download_video(url: str) -> str:
     """yt-dlp ব্যবহার করে YouTube থেকে ভিডিও ডাউনলোড করে"""
     os.makedirs('downloads', exist_ok=True)
@@ -37,10 +37,10 @@ async def download_video(url: str) -> str:
         'quiet': True,
         'no_warnings': True,
         'cookiefile': 'cookies.txt',  # GitHub-এ আপলোড করা cookies.txt
-        # 💡 iOS ক্লায়েন্ট ব্যবহার করলে বট চেক অনেক কম আসে
+        # 💡 tv এবং mweb ক্লায়েন্ট Render-এর ডেটাসেন্টার IP-তে বট-চেক এড়াতে সাহায্য করে
         'extractor_args': {
             'youtube': {
-                'player_client': ['ios', 'android']
+                'player_client': ['tv', 'mweb', 'web']
             }
         }
     }
